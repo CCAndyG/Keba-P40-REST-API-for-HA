@@ -15,11 +15,11 @@ Installation:
 Hier noch die Basic Infos was passiert, falls jemand mehr Infos benötigt.....
 
 Die Beschreibung der REST API ist auf jeder Wallbox selbst über folgenden Link zu erreichen:
-  - https://<IP-ADRESSE>:8443/docs#/V2_WALLBOX/post_v2_wallboxes
+  - https://192.168.XXX.XXX:8443/docs#/V2_WALLBOX/post_v2_wallboxes
 
 
 Befehl zur Abfrage des Tokens. Er ist immer nur 15minuten Gültig!
-  - curl -X POST "https://<IP-ADRESSE>:8443/v2/jwt/login" -k -H "Content-Type: application/json" -d "{\"username\":\"admin\", \"password\":\"PASSWORT\"}"
+  - curl -X POST "https://192.168.XXX.XXX:8443/v2/jwt/login" -k -H "Content-Type: application/json" -d "{\"username\":\"admin\", \"password\":\"PASSWORT\"}"
 
 Hier der genutzte GET Befehl zur Abfrag der Werte von der Wallbox:
-  - curl -X GET "https://<IP-ADRESSE>/v2/wallboxes" -k -H "Authorization: Bearer <TOKEN_AUS_VORNGEGANGENER_ABFRAGE>
+  - curl -X GET "https://192.168.XXX.XXX/v2/wallboxes" -k -H "Authorization: Bearer <TOKEN_AUS_VORNGEGANGENER_ABFRAGE>
