@@ -60,12 +60,14 @@ class KebaPowerSensor(BaseSensor):
         super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_power"
         self._attr_name = "Wallbox Leistung"
-        self._attr_native_unit_of_measurement = "W"
+        self._attr_native_unit_of_measurement = "kW"
         self._attr_device_class = "power"
-
+        self._attr_state_class = "measurement"
+    
     @property
     def native_value(self):
-        return self.meter.get("totalActivePower", 0)
+        value = self.meter.get("totalActivePower")
+        return (value / 1000000) if value is not None else 0 
 
 
 class KebaEnergySensor(BaseSensor):
@@ -79,7 +81,8 @@ class KebaEnergySensor(BaseSensor):
 
     @property
     def native_value(self):
-        return self.meter.get("meterValue", 0)
+        value = self.meter.get("meterValue")
+        return (value / 1000000) if value is not None else 0 
         
 
 class KebaTempSensor(BaseSensor):
