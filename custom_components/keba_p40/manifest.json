@@ -1,7 +1,7 @@
 {
   "domain": "keba_p40",
   "name": "Keba P40 REST API",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "documentation": "https://github.com/CCAndyG/Keba-P40-REST-API-for-HA",
   "codeowners": ["@CCAndyG"],
   "iot_class": "local_polling",
