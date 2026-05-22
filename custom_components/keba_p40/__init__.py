@@ -4,11 +4,14 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 DOMAIN = "keba_p40"
-PLATFORMS = ["sensor", "binary_sensor"]
+PLATFORMS = ["sensor", "binary_sensor", "select", "number"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +34,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry,
+        PLATFORMS,
+    )
 
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -40,6 +46,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 
 class KebaCoordinator(DataUpdateCoordinator):
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
         self.entry = entry
         self.host = entry.data["host"]
@@ -70,8 +77,11 @@ class KebaCoordinator(DataUpdateCoordinator):
                 },
                 ssl=False,
             ) as resp:
+
                 if resp.status != 200:
-                    raise UpdateFailed(f"Login fehlgeschlagen: {resp.status}")
+                    raise UpdateFailed(
+                        f"Login fehlgeschlagen: {resp.status}"
+                    )
 
                 data = await resp.json()
 
@@ -85,10 +95,13 @@ class KebaCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Kein Token erhalten: {data}")
 
     async def _async_update_data(self):
+
         if not self.token or time.time() > self.expiry:
             await self._get_token()
 
-        headers = {"Authorization": f"Bearer {self.token}"}
+        headers = {
+            "Authorization": f"Bearer {self.token}"
+        }
 
         try:
             async with self.session.get(
@@ -98,22 +111,145 @@ class KebaCoordinator(DataUpdateCoordinator):
             ) as resp:
 
                 if resp.status == 401:
-                    _LOGGER.debug("Token abgelaufen, erneuere Token")
+
+                    _LOGGER.debug(
+                        "Token abgelaufen, erneuere Token"
+                    )
+
                     await self._get_token()
-                    headers["Authorization"] = f"Bearer {self.token}"
+
+                    headers["Authorization"] = (
+                        f"Bearer {self.token}"
+                    )
 
                     async with self.session.get(
                         f"https://{self.host}:8443/v2/wallboxes",
                         headers=headers,
                         ssl=False,
                     ) as resp2:
+
                         data = await resp2.json()
+
                 else:
                     data = await resp.json()
 
         except Exception as err:
             raise UpdateFailed(f"Update Fehler: {err}")
 
+        try:
+            async with self.session.get(
+                f"https://{self.host}:8443/v2/configs/lmgmt",
+                headers=headers,
+                ssl=False,
+            ) as cfg_resp:
+
+                configs_data = await cfg_resp.json()
+
+        except Exception as err:
+            raise UpdateFailed(f"Config Fehler: {err}")
+
         return {
-            "wallboxes": data.get("wallboxes") or []
+            "wallboxes": data.get("wallboxes") or [],
+            "configs": configs_data.get("configs") or [],
         }
+
+
+    async def set_phases(self, phases: int):
+        """Set charging phases."""
+
+        if not self.token or time.time() > self.expiry:
+            await self._get_token()
+
+        wallboxes = self.data.get("wallboxes") or []
+
+        if not wallboxes:
+            raise UpdateFailed("Keine Wallbox gefunden")
+
+        wallbox = wallboxes[0]
+
+        serial = wallbox.get("serialNumber")
+
+        if phases == 1:
+
+            payload = {
+                "number": 1,
+                "serialNumber": serial,
+                "maxPhases": 1,
+                "phaseUsed": "L1",
+            }
+
+        elif phases == 3:
+
+            payload = {
+                "number": 1,
+                "serialNumber": serial,
+                "maxPhases": 3,
+                "phaseUsed": "L1_L2_L3",
+            }
+
+        else:
+            raise ValueError(
+                "Nur 1 oder 3 Phasen erlaubt"
+            )
+
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+        }
+
+        async with self.session.put(
+            f"https://{self.host}:8443/v2/wallboxes/{serial}",
+            headers=headers,
+            json=payload,
+            ssl=False,
+        ) as resp:
+
+            if resp.status not in [200, 204]:
+
+                text = await resp.text()
+
+                raise UpdateFailed(
+                    f"Phasenumschaltung fehlgeschlagen: "
+                    f"{resp.status} {text}"
+                )
+
+        await self.async_request_refresh()
+  
+        
+    async def set_max_current(self, current: int):
+        """Set max available current."""
+
+        if not self.token or time.time() > self.expiry:
+            await self._get_token()
+
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "configs": [
+                {
+                    "key": "max_available_current",
+                    "value": str(current),
+                }
+            ]
+        }
+
+        async with self.session.put(
+            f"https://{self.host}:8443/v2/configs/lmgmt",
+            headers=headers,
+            json=payload,
+            ssl=False,
+        ) as resp:
+
+            if resp.status not in [200, 204]:
+
+                text = await resp.text()
+
+                raise UpdateFailed(
+                    f"Stromlimit setzen fehlgeschlagen: "
+                    f"{resp.status} {text}"
+                )
+
+        await self.async_request_refresh()
