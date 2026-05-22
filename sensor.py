@@ -8,7 +8,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([
+        KebaSerialNumSensor(coordinator, entry),
         KebaStateSensor(coordinator, entry),
+        KebaPhaseUseSensor(coordinator, entry),
+        KebaLeistungsfaktSensor(coordinator, entry),
         KebaPowerSensor(coordinator, entry),
         KebaEnergySensor(coordinator, entry),
         KebaTempSensor(coordinator, entry),
@@ -44,6 +47,17 @@ class BaseSensor(CoordinatorEntity, SensorEntity):
         }
 
 
+class KebaSerialNumSensor(BaseSensor):
+    def __init__(self, coordinator, entry):
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_serialNumber"
+        self._attr_name = "Wallbox Seriennummer"
+
+    @property
+    def native_value(self):
+        return self.wb.get("serialNumber", "unknown")
+
+
 class KebaStateSensor(BaseSensor):
     def __init__(self, coordinator, entry):
         super().__init__(coordinator, entry)
@@ -55,20 +69,45 @@ class KebaStateSensor(BaseSensor):
         return self.wb.get("state", "unknown")
 
 
+class KebaPhaseUseSensor(BaseSensor):
+    def __init__(self, coordinator, entry):
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_phaseUsed"
+        self._attr_name = "Wallbox Phasen"
+
+    @property
+    def native_value(self):
+        return self.wb.get("phaseUsed", "unknown")
+
+
+class KebaLeistungsfaktSensor(BaseSensor):
+    def __init__(self, coordinator, entry):
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_totalPowerFactor"
+        self._attr_name = "Wallbox Leistungsfaktor"
+        self._attr_native_unit_of_measurement = "%"
+        self._attr_device_class = "power_factor"
+        self._attr_state_class = "measurement"
+
+    @property
+    def native_value(self):
+        value = self.meter.get("totalPowerFactor")
+        return (value / 10) if value is not None else 0 
+
+
 class KebaPowerSensor(BaseSensor):
     def __init__(self, coordinator, entry):
         super().__init__(coordinator, entry)
         self._attr_unique_id = f"{entry.entry_id}_power"
         self._attr_name = "Wallbox Leistung"
         self._attr_native_unit_of_measurement = "kW"
-        self._attr_device_class = "power"
+        self._attr_device_class = "power_factor"
         self._attr_state_class = "measurement"
-    
+
     @property
     def native_value(self):
         value = self.meter.get("totalActivePower")
         return (value / 1000000) if value is not None else 0 
-
 
 class KebaEnergySensor(BaseSensor):
     def __init__(self, coordinator, entry):
@@ -82,8 +121,7 @@ class KebaEnergySensor(BaseSensor):
     @property
     def native_value(self):
         value = self.meter.get("meterValue")
-        return (value / 1000000) if value is not None else 0 
-        
+        return (value / 1000000) if value is not None else 0        
 
 class KebaTempSensor(BaseSensor):
     def __init__(self, coordinator, entry):
