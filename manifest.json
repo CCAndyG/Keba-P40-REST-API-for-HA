@@ -1,7 +1,0 @@
-{
-  "domain": "keba_p40",
-  "name": "KEBA P40",
-  "version": "0.1.4",
-  "config_flow": true,
-  "iot_class": "local_polling"
-}
