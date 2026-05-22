@@ -1,6 +1,11 @@
 # Keba-P40-REST-API-for-HA
 Keba P40 Integration für Homeassistant, wenn Modbus und OCPP bereits anderweitig belegt ist. z.B. Abrechnungsdienstleister und Energiemanagementsystem 
 
+Folgende Funktionen sind für die P40 vorhanden:
+  - Phasenumschaltung
+  - Anpassung des Stromes der Phase/Phasen
+  - Anzeige von den Wichtigsten werten
+
 Installation:
   1. Die Files in Homeassistant unter "/homeassistant/custom_components/keba_p40/" anlegen
   2. Homeassistant neu starten
@@ -14,7 +19,8 @@ Installation:
   
   5 Folgendes Gerät und Entitäten werden dann angelegt:
 
-  <img width="332" height="535" alt="grafik" src="https://github.com/user-attachments/assets/827dc719-2cd3-4c45-8e4f-4d07dae0eabe" />
+  <img width="335" height="780" alt="grafik" src="https://github.com/user-attachments/assets/daf846d8-405f-4245-bf69-16e961dacf71" />
+
 
 
 
