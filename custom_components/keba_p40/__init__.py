@@ -155,7 +155,7 @@ class KebaCoordinator(DataUpdateCoordinator):
 
 
     async def set_phases(self, phases: int):
-        """Set charging phases."""
+        """Set charging phases via phase-toggle endpoint."""
 
         if not self.token or time.time() > self.expiry:
             await self._get_token()
@@ -166,55 +166,34 @@ class KebaCoordinator(DataUpdateCoordinator):
             raise UpdateFailed("Keine Wallbox gefunden")
 
         wallbox = wallboxes[0]
-
         serial = wallbox.get("serialNumber")
 
-        if phases == 1:
+        if phases not in [1, 3]:
+            raise ValueError("Nur 1 oder 3 Phasen erlaubt")
 
-            payload = {
-                "number": 1,
-                "serialNumber": serial,
-                "maxPhases": 1,
-                "phaseUsed": "L1",
-            }
-
-        elif phases == 3:
-
-            payload = {
-                "number": 1,
-                "serialNumber": serial,
-                "maxPhases": 3,
-                "phaseUsed": "L1_L2_L3",
-            }
-
-        else:
-            raise ValueError(
-                "Nur 1 oder 3 Phasen erlaubt"
-            )
+        # Der Parameter wird als Query-String an die URL angehängt
+        url = f"https://{self.host}:8443/v2/wallboxes/{serial}/phase-toggle?numberOfPhases={phases}"
 
         headers = {
             "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
-        async with self.session.put(
-            f"https://{self.host}:8443/v2/wallboxes/{serial}",
+        # Wechsel von PUT auf POST und Entfernen des json-Parameters
+        async with self.session.post(
+            url,
             headers=headers,
-            json=payload,
             ssl=False,
         ) as resp:
 
             if resp.status not in [200, 204]:
-
                 text = await resp.text()
-
                 raise UpdateFailed(
-                    f"Phasenumschaltung fehlgeschlagen: "
-                    f"{resp.status} {text}"
+                    f"Phasenumschaltung fehlgeschlagen: {resp.status} {text}"
                 )
 
         await self.async_request_refresh()
-  
+
         
     async def set_max_current(self, current: int):
         """Set max available current."""
