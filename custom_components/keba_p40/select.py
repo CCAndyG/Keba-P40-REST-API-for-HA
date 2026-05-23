@@ -1,3 +1,4 @@
+import asyncio
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -25,6 +26,9 @@ class KebaPhaseSelect(CoordinatorEntity, SelectEntity):
             "1-phasig",
             "3-phasig",
         ]
+        
+        # Wir starten standardmäßig mit der Anzeige "3-phasig"
+        self._current_displayed_option = "3-phasig"
 
     @property
     def wallbox(self):
@@ -34,19 +38,19 @@ class KebaPhaseSelect(CoordinatorEntity, SelectEntity):
 
     @property
     def current_option(self):
-        phase_used = self.wallbox.get("phaseUsed")
-
-        if phase_used == "L1":
-            return "1-phasig"
-
-        return "3-phasig"
+        # Zeigt immer den lokal gespeicherten Zustand an
+        return self._current_displayed_option
 
     async def async_select_option(self, option: str):
+        # Erzwingt das Senden, selbst wenn die Option optisch bereits ausgewählt war
         if option == "1-phasig":
             await self.coordinator.set_phases(1)
-
         elif option == "3-phasig":
             await self.coordinator.set_phases(3)
+
+        # Zustand für die Anzeige aktualisieren
+        self._current_displayed_option = option
+        self.async_write_ha_state()
 
     @property
     def available(self):
