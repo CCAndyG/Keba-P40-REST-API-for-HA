@@ -19,7 +19,9 @@ Installation:
   
   5 Folgendes Gerät und Entitäten werden dann angelegt:
 
-  <img width="335" height="780" alt="grafik" src="https://github.com/user-attachments/assets/daf846d8-405f-4245-bf69-16e961dacf71" />
+  <img width="405" height="309" alt="grafik" src="https://github.com/user-attachments/assets/4104e977-907e-455d-99a5-3f89ecc0af61" />
+
+  <img width="408" height="831" alt="grafik" src="https://github.com/user-attachments/assets/bafd9e44-8e71-46b0-b63f-c50604663a31" />
 
 
 
