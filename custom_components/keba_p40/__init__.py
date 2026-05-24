@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 DOMAIN = "keba_p40"
-PLATFORMS = ["sensor", "binary_sensor", "select", "number"]
+PLATFORMS = ["sensor", "binary_sensor", "select", "number", "button"]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -229,6 +229,67 @@ class KebaCoordinator(DataUpdateCoordinator):
                 raise UpdateFailed(
                     f"Stromlimit setzen fehlgeschlagen: "
                     f"{resp.status} {text}"
+                )
+
+        await self.async_request_refresh()
+        
+    async def start_charging(self):
+        if not self.token or time.time() > self.expiry:
+            await self._get_token()
+
+        wallboxes = self.data.get("wallboxes") or []
+        if not wallboxes:
+            raise UpdateFailed("Keine Wallbox gefunden")
+
+        serial = wallboxes[0].get("serialNumber")
+
+        url = f"https://{self.host}:8443/v2/wallboxes/{serial}/start-charging"
+
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Accept": "application/json",
+        }
+
+        async with self.session.post(
+            url,
+            headers=headers,
+            ssl=False,
+        ) as resp:
+            if resp.status not in [200, 204]:
+                text = await resp.text()
+                raise UpdateFailed(
+                    f"Start charging fehlgeschlagen: {resp.status} {text}"
+                )
+
+        await self.async_request_refresh()
+
+
+    async def stop_charging(self):
+        if not self.token or time.time() > self.expiry:
+            await self._get_token()
+
+        wallboxes = self.data.get("wallboxes") or []
+        if not wallboxes:
+            raise UpdateFailed("Keine Wallbox gefunden")
+
+        serial = wallboxes[0].get("serialNumber")
+
+        url = f"https://{self.host}:8443/v2/wallboxes/{serial}/stop-charging"
+
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Accept": "application/json",
+        }
+
+        async with self.session.post(
+            url,
+            headers=headers,
+            ssl=False,
+        ) as resp:
+            if resp.status not in [200, 204]:
+                text = await resp.text()
+                raise UpdateFailed(
+                    f"Stop charging fehlgeschlagen: {resp.status} {text}"
                 )
 
         await self.async_request_refresh()
