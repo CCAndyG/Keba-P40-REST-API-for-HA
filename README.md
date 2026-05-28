@@ -21,7 +21,8 @@ Installation:
 
   <img width="405" height="309" alt="grafik" src="https://github.com/user-attachments/assets/4104e977-907e-455d-99a5-3f89ecc0af61" />
 
-  <img width="408" height="831" alt="grafik" src="https://github.com/user-attachments/assets/bafd9e44-8e71-46b0-b63f-c50604663a31" />
+ <img width="335" height="726" alt="grafik" src="https://github.com/user-attachments/assets/147904a7-37ff-4c0b-89a0-a67b97cdfed8" />
+
 
 
 
