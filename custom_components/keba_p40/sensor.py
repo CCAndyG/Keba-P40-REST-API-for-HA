@@ -15,6 +15,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities([
         KebaSerialNumSensor(coordinator, entry),
         KebaStateSensor(coordinator, entry),
+        KebaPVState(coordinator, entry),
         KebaLeistungsfaktSensor(coordinator, entry),
         KebaPowerSensor(coordinator, entry),
         KebaEnergySensor(coordinator, entry),
@@ -87,6 +88,17 @@ class KebaStateSensor(BaseSensor):
     @property
     def native_value(self):
         return self.wb.get("state", "unknown")
+
+
+class KebaPVState(BaseSensor):
+    def __init__(self, coordinator, entry):
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_pv_status"
+        self._attr_name = "Wallbox PV Status"
+
+    @property
+    def native_value(self):
+        return self.coordinator.data.get("pvstatus", {}).get("pvStatus", "unknown")
 
 
 class KebaLeistungsfaktSensor(BaseSensor):
