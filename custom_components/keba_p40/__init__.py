@@ -148,9 +148,21 @@ class KebaCoordinator(DataUpdateCoordinator):
         except Exception as err:
             raise UpdateFailed(f"Config Fehler: {err}")
 
+        try:
+            async with self.session.get(
+                f"https://{self.host}:8443/v2/configs/lmgmt/pvstatus",
+                headers=headers,
+                ssl=False,
+            ) as pv_resp:
+                pv_data = await pv_resp.json()
+        except Exception as err:
+            _LOGGER.warning("Konnte PV-Status nicht laden: %s", err)
+            pv_data = {}
+
         return {
             "wallboxes": data.get("wallboxes") or [],
             "configs": configs_data.get("configs") or [],
+            "pvstatus": pv_data
         }
 
 
