@@ -42,7 +42,10 @@ class BaseKebaButton(CoordinatorEntity, ButtonEntity):
 class KebaStartChargingButton(BaseKebaButton):
 
     _attr_name = "Laden starten"
-    _attr_unique_id = "keba_p40_start_charging"
+
+    def __init__(self, coordinator, entry):
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_start_charging"
 
     async def async_press(self):
         if self.serial:
@@ -52,7 +55,10 @@ class KebaStartChargingButton(BaseKebaButton):
 class KebaStopChargingButton(BaseKebaButton):
 
     _attr_name = "Laden stoppen"
-    _attr_unique_id = "keba_p40_stop_charging"
+
+    def __init__(self, coordinator, entry):
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_stop_charging"
 
     async def async_press(self):
         if self.serial:

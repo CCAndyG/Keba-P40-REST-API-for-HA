@@ -10,6 +10,8 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .migrations import async_run_migrations
+
 DOMAIN = "keba_p40"
 PLATFORMS = ["sensor", "binary_sensor", "select", "number", "button"]
 
@@ -21,6 +23,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    async_run_migrations(hass, entry)
+
     coordinator = KebaCoordinator(hass, entry)
 
     await coordinator.async_config_entry_first_refresh()
